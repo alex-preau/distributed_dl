@@ -11,7 +11,7 @@ import time
 import argparse
 from datetime import datetime
 from typing import Optional
-
+import pandas as pd
 import datasets
 import torch
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer, seed_everything
@@ -45,8 +45,11 @@ parser.add_argument('--seed', type=int, default=42, metavar='S',
 parser.add_argument('--fp16', action='store_true', default=False,
                     help='use fp16')
 
-parser.add_argument('--gpus', type=int, default=1, metavar='N',
+parser.add_argument('--gpus', type=int, default=2, metavar='N',
                     help='number of GPUs to use')
+
+parser.add_argument('--all',type=bool, default=False,
+                    help='Run all options (ignore others) and print dataframe')
 
 
 
@@ -54,31 +57,7 @@ parser.add_argument('--gpus', type=int, default=1, metavar='N',
 
 class GLUEDataModule(LightningDataModule):
 
-    task_text_field_map = {
-        "cola": ["sentence"],
-        "sst2": ["sentence"],
-        "mrpc": ["sentence1", "sentence2"],
-        "qqp": ["question1", "question2"],
-        "stsb": ["sentence1", "sentence2"],
-        "mnli": ["premise", "hypothesis"],
-        "qnli": ["question", "sentence"],
-        "rte": ["sentence1", "sentence2"],
-        "wnli": ["sentence1", "sentence2"],
-        "ax": ["premise", "hypothesis"],
-    }
 
-    glue_task_num_labels = {
-        "cola": 2,
-        "sst2": 2,
-        "mrpc": 2,
-        "qqp": 2,
-        "stsb": 1,
-        "mnli": 3,
-        "qnli": 2,
-        "rte": 2,
-        "wnli": 2,
-        "ax": 3,
-    }
 
     loader_columns = [
         "datasets_idx",
@@ -92,25 +71,25 @@ class GLUEDataModule(LightningDataModule):
 
     def __init__(
         self,
-        model_name_or_path: str,
-        task_name: str = "mrpc",
         max_seq_length: int = 128,
         train_batch_size: int = 32,
         **kwargs,
     ):
         super().__init__()
-        self.model_name_or_path = model_name_or_path
-        self.task_name = task_name
+        self.model_name = "albert-base-v2"
+        self.task_name = 'cola'
         self.max_seq_length = max_seq_length
         self.train_batch_size = train_batch_size
 
 
-        self.text_fields = self.task_text_field_map[task_name]
-        self.num_labels = self.glue_task_num_labels[task_name]
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path, use_fast=True)
+        self.text_fields = ['sentence']
+        self.num_labels = 2#
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
 
     def setup(self, stage: str):
-        self.dataset = datasets.load_dataset("glue", self.task_name)
+        self.dataset = datasets.load_dataset("glue", "cola") #load cola dataset from glue task
+
+        #bro into test, train, val
 
         for split in self.dataset.keys():
             self.dataset[split] = self.dataset[split].map(
@@ -121,34 +100,25 @@ class GLUEDataModule(LightningDataModule):
             self.columns = [c for c in self.dataset[split].column_names if c in self.loader_columns]
             self.dataset[split].set_format(type="torch", columns=self.columns)
 
-        self.eval_splits = [x for x in self.dataset.keys() if "validation" in x]
 
     def prepare_data(self):
         datasets.load_dataset("glue", self.task_name)
-        AutoTokenizer.from_pretrained(self.model_name_or_path, use_fast=True)
+        AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
 
     def train_dataloader(self):
-        return DataLoader(self.dataset["train"], batch_size=self.train_batch_size, shuffle=True)
+        return DataLoader(self.dataset['train'], batch_size=self.train_batch_size, shuffle=True,num_workers=1)
 
     def len(self):
-        return self.dataset.__len__()
+        return self.dataset['train'].__len__()
 
 
-    def test_dataloader(self):
-        if len(self.eval_splits) == 1:
-            return DataLoader(self.dataset["test"], batch_size=self.eval_batch_size)
-        elif len(self.eval_splits) > 1:
-            return [DataLoader(self.dataset[x], batch_size=self.eval_batch_size) for x in self.eval_splits]
 
     def convert_to_features(self, example_batch, indices=None):
 
-        # Either encode single sentence or sentence pairs
-        if len(self.text_fields) > 1:
-            texts_or_text_pairs = list(zip(example_batch[self.text_fields[0]], example_batch[self.text_fields[1]]))
-        else:
-            texts_or_text_pairs = example_batch[self.text_fields[0]]
 
-        # Tokenize the text/text pairs
+        texts_or_text_pairs = example_batch['sentence']
+
+
         features = self.tokenizer.batch_encode_plus(
             texts_or_text_pairs, max_length=self.max_seq_length, pad_to_max_length=True, truncation=True
         )
@@ -198,32 +168,70 @@ class GLUETransformer(LightningModule):
 if __name__ == '__main__':
     args = parser.parse_args()
 
-
+    timing_dict = {'Model':[],'Batch':[],'Precision':[],'#GPUs':[],'Samples/Sec':[]}
     seed_everything(args.seed)
+    if args.all:
+        for m_type in [50]:
+            for bs in [2,4,8,16,32,64]:#2,64,128,256,
+                for fp in [32,16]:
+                    for gpus in [1,2]:
 
-    dm = GLUEDataModule(model_name_or_path="albert-base-v2", task_name="cola",train_batch_size=64)
-    dm.setup("fit")
-    model = GLUETransformer(
-        model_name_or_path="albert-base-v2",
-        num_labels=dm.num_labels,
-        task_name=dm.task_name,
-    )
 
-    trainer = Trainer(
-        strategy="fsdp", accelerator="cuda", 
-        max_epochs=1,
+                        dm = GLUEDataModule( train_batch_size=bs)
+                        dm.setup("fit")
+                        model = GLUETransformer(
+                            model_name_or_path="albert-base-v2",
+                            num_labels=dm.num_labels,
+                            task_name=dm.task_name,
+                        )
 
-        devices=args.gpus if torch.cuda.is_available() else None,  # limiting got iPython runs
-    )
-    
+                        trainer = Trainer(
+                            strategy="fsdp_native", accelerator="cuda", 
+                            max_epochs=1,
+                            precision=fp,
+                            devices=gpus # limiting got iPython runs
+                        )
 
-    s = time.time()
-    trainer.fit(model, datamodule=dm)
-    e = time.time()
 
-    print('Batch Size,')
-    print('Net time:',e-s)
-    print("Average samples/sec:",(dm.len() * args.epochs) / (e-s))
+
+                        s = time.time()
+                        trainer.fit(model, datamodule=dm)
+                        e = time.time()
+
+                        print('Net time:',e-s)
+                        print("Average samples/sec:",(dm.len() * args.epochs) / (e-s))
+                        timing_dict['Model'].append('alBERT')
+                        timing_dict['Batch'].append(bs)
+                        timing_dict['Precision'].append(fp)
+                        timing_dict['#GPUs'].append(gpus)
+                        timing_dict['Samples/Sec'].append((dm.len() * args.epochs) / (e-s))
+                        print("Complete Timing Dict")
+                        out_data = pd.DataFrame(data=timing_dict)
+                        out_data.to_csv('FSDP_timing_albert.csv')
+    else:
+        dm = GLUEDataModule( train_batch_size=64)
+        dm.setup("fit")
+        model = GLUETransformer(
+            model_name_or_path="albert-base-v2",
+            num_labels=dm.num_labels,
+            task_name=dm.task_name,
+        )
+
+        trainer = Trainer(
+            strategy="fsdp_native", accelerator="cuda", 
+            max_epochs=1,
+
+            devices=args.gpus if torch.cuda.is_available() else None,  # limiting got iPython runs
+        )
+        
+
+        s = time.time()
+        trainer.fit(model, datamodule=dm)
+        e = time.time()
+
+        print('Batch Size,')
+        print('Net time:',e-s)
+        print("Average samples/sec:",(dm.len() * args.epochs) / (e-s))
 
 # 64 batch size with fsdp and 2 gpus 0.03136875032860385 samples/ second
 # 32 batch size with fsdp and 2 gpus 0.03001464685890624samples/ second 

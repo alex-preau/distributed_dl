@@ -10,6 +10,9 @@ import torchvision.transforms as transforms
 import time
 import argparse
 import transformers
+from pytorch_lightning import seed_everything
+
+import pandas as pd
 
 parser = argparse.ArgumentParser(description='PyTorch Fairseq Timing')
 #default batch size 64
@@ -34,6 +37,9 @@ parser.add_argument('--gpus', type=int, default=2, metavar='N',
 
 parser.add_argument('--resnet',type=int, default=18, metavar='N',
                     help='resnet version')
+
+parser.add_argument('--all',type=bool, default=False,
+                    help='Run all options (ignore others) and print dataframe')
 
 
 
@@ -112,7 +118,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     seed_everything(args.seed)
 
-    model = ResNet50(10,args.resnet)
+    timing_dict = {'Model':[],'Batch':[],'Precision':[],'#GPUs':[],'Samples/Sec':[]}
+
+    
     transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.48232,), (0.23051,))
@@ -122,17 +130,52 @@ if __name__ == '__main__':
 
     img_val =  torchvision.datasets.CIFAR10(root='./data', train=False,
                 download=True, transform=transform)
-    train_dl = DataLoader(img_train,num_workers=1,batch_size=args.batch_size,pin_memory=True)
-    val_dl = DataLoader(img_val)
+    if args.all:
+        for m_type in [50]:
+            for bs in [1024]:#2,64,128,256,
+                for fp in [32,16]:
+                    for gpus in [1,2]:
 
-    trainer = pl.Trainer(strategy="fsdp_native", accelerator="cuda", devices=args.gpus,max_epochs=args.epochs) #strategy='fsdp_native'
+
+
+                        model = ResNet50(10,args.resnet)
+                        train_dl = DataLoader(img_train,num_workers=1,batch_size=bs)
+                        val_dl = DataLoader(img_val)
+
+                        trainer = pl.Trainer(strategy="fsdp_native", accelerator="cuda", devices=gpus,max_epochs=args.epochs,precision=fp) #strategy='fsdp_native'
 
 
 
-    s = time.time()
-    trainer.fit(model,train_dl)
-    e = time.time()
+                        s = time.time()
+                        trainer.fit(model,train_dl)
+                        e = time.time()
 
-    print('Net time:',e-s)
-    print("Average samples/sec:",(len(img_train) * args.epochs) / (e-s))
+                        print('Net time:',e-s)
+                        print("Average samples/sec:",(len(img_train) * args.epochs) / (e-s))
+                        timing_dict['Model'].append('ResNet-' + str(m_type))
+                        timing_dict['Batch'].append(bs)
+                        timing_dict['Precision'].append(fp)
+                        timing_dict['#GPUs'].append(gpus)
+                        timing_dict['Samples/Sec'].append((len(img_train) * args.epochs) / (e-s))
+                        print("Complete Timing Dict")
+                        out_data = pd.DataFrame(data=timing_dict)
+                        out_data.to_csv('FSDP_timing.csv')
+
+    else:
+        model = ResNet50(10,args.resnet)
+        train_dl = DataLoader(img_train,num_workers=1,batch_size=args.batch_size,pin_memory=True)
+        val_dl = DataLoader(img_val)
+
+        trainer = pl.Trainer(strategy="fsdp_native", accelerator="cuda", devices=args.gpus,max_epochs=args.epochs) #strategy='fsdp_native'
+
+
+
+        s = time.time()
+        trainer.fit(model,train_dl)
+        e = time.time()
+
+        print('Net time:',e-s)
+        print("Average samples/sec:",(len(img_train) * args.epochs) / (e-s))
+
+
 
