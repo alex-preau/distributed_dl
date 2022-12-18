@@ -5,8 +5,8 @@
 </a>
 </div>
 
-# COMS-6998: Applications of Deep Learning in Surgery
-#### Alexander Ruthe (ayr2111) and Skyler Szot (sls2305)
+# COMS-6998: Distributed Training
+#### Alex Preau (awp2128) and Skyler Szot (sls2305)
 
 <div align="center">
 <img src="./img_src/resnet18_vid04_tissue_input.gif" width="200"> <img src="./img_src/resnet18_vid04_instrument_cam.gif" width="200"> <img src="./img_src/resnet18_vid04_instrument.gif" width="200">
