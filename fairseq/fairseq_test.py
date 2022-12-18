@@ -9,6 +9,7 @@ from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
 import time
 import argparse
+import transformers
 
 parser = argparse.ArgumentParser(description='PyTorch Fairseq Timing')
 #default batch size 64
@@ -28,7 +29,7 @@ parser.add_argument('--seed', type=int, default=42, metavar='S',
 parser.add_argument('--fp16', action='store_true', default=False,
                     help='use fp16')
 
-parser.add_argument('--gpus', type=int, default=1, metavar='N',
+parser.add_argument('--gpus', type=int, default=2, metavar='N',
                     help='number of GPUs to use')
 
 parser.add_argument('--resnet',type=int, default=18, metavar='N',
@@ -109,7 +110,7 @@ class ResNet50(pl.LightningModule):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-
+    seed_everything(args.seed)
 
     model = ResNet50(10,args.resnet)
     transform = transforms.Compose([
@@ -124,8 +125,9 @@ if __name__ == '__main__':
     train_dl = DataLoader(img_train,num_workers=1,batch_size=args.batch_size,pin_memory=True)
     val_dl = DataLoader(img_val)
 
-    trainer = pl.Trainer(strategy="fsdp", accelerator="cuda", devices=args.gpus,max_epochs=args.epochs) #strategy='fsdp_native'
-    
+    trainer = pl.Trainer(strategy="fsdp_native", accelerator="cuda", devices=args.gpus,max_epochs=args.epochs) #strategy='fsdp_native'
+
+
 
     s = time.time()
     trainer.fit(model,train_dl)
