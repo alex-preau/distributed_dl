@@ -1,6 +1,5 @@
 
 <div align="center">
-<a href="http://camma.u-strasbg.fr/">
 <img src="./img_src/Columbia-Lions-Logo.png" width="200" />
 </a>
 </div>
@@ -17,14 +16,7 @@
 
 ## I. Project Description
 
-Recent advances in minimally invasive surgery have yielded 
-datasets of intraoperative video recordings, well
-suited for deep learning applications. This project investigates
-deep learning methods applied to laparoscopic cholecystectomy 
-(gallbladder removal) surgery videos specifically, comparing feature
-extraction architectures, characterize them in ways not explored in the published
-literature, attempting to improve them with transfer learning, and 
-applying human interpretable visual results based on class activation mapping. 
+Training a deep learning model to solve a real world problem requires a lot of data, which can be very time consuming. To ensure better efficiency and less time consumption, researchers can leverage parallel training approaches. We will be comparing various methods of parallel training of deep learning models in PyTorch. There are many proposed methods for this problem, from SIMD-like methods of averaging the gradients of batches computed on each independent GPU, to sharding and computing the parallel components of the computational graph independently. In this project, we will be comparing the advantages and disadvantages of these distributed training approaches.
 
 <div align="center">
 <a href="http://camma.u-strasbg.fr/">
