@@ -36,7 +36,7 @@ Our second objective is using Fair Scale to train the same models with fully sha
 
 
 <div align="center">
-<img src="./img_src/FSDP.PNG" width="800">
+<img src="./img_src/FSDP.png" width="800">
 </div>
 
 #### Thrust 4: Pipelining
@@ -169,15 +169,15 @@ We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 
 We do not record loss as we do not train models to convergence and obvserved losses after a single epoch were roughtly equivilent for all training schemes. 
 
 <div align="center">
-<img src="./img_src/fairscale_table_1.PNG" width="600">
+<img src="./img_src/fairscale_table_1.png" width="600">
 </div>
 
 <div align="center">
-<img src="./img_src/fairscale_table_2.PNG" width="600">
+<img src="./img_src/fairscale_table_2.png" width="600">
 </div>
 
 <div align="center">
-<img src="./img_src/fairscale_table_3.PNG" width="600">
+<img src="./img_src/fairscale_table_3.png" width="600">
 </div>
 
 
