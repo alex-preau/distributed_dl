@@ -106,7 +106,7 @@ Horovod accelerates deep learning training by distributing batches across multip
 - Model: ResNet-18, ResNet-50
 - Batch size: 32, 64, 128, 256, 512, 1024
 - Precision: FP32, FP16, N/A
-- # GPU: 1, 2
+- GPUs: 1, 2
 
 Note that when using a single GPU there is no All-Reduce step so precision is not applicable. We recorded the throughput for each training configuration as samples/second (or images/second). We did not record loss or accuracy which had negligible variation. The full table of results are shown below:
 
