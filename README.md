@@ -27,7 +27,7 @@ This project aims to investigate various distributed training techniques for dee
 Our second objective is to implement the same models PyTorch, but now with distributed gradient computation and averaging across multiple GPUs using Horovod [1]. Horovod is a distributed deep learning training framework for PyTorch, which makes distributed deep learning fast and easy to use. Each GPU trains on a subset of data, and gradients are synchronized with an allreduce or allgather step [1]. We will compare the distributed training results with the baseline to investigate which cases benefit from multi-GPU training.
 
 <div align="center">
-<img src="./img_src/horovod.png" width="800">
+<img src="./img_src/horovod.PNG" width="800">
 </div>
 
 #### Objective 3: Fair Scale
