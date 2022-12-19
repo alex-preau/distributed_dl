@@ -203,7 +203,7 @@ test_data = batchify(test_data, eval_batch_size)
 # ``N`` is along dimension 1.
 #
 
-bptt = 25
+bptt = 35
 def get_batch(source, i):
     seq_len = min(bptt, len(source) - 1 - i)
     data = source[i:i+seq_len]
@@ -240,10 +240,10 @@ def get_batch(source, i):
 #    cross-partition overheads.
 
 ntokens = len(vocab) # the size of vocabulary
-emsize = 4096 # embedding dimension
-nhid = 4096 # the dimension of the feedforward network model in nn.TransformerEncoder
-nlayers = 12 # the number of nn.TransformerEncoderLayer in nn.TransformerEncoder
-nhead = 16 # the number of heads in the multiheadattention models
+emsize = 200 # embedding dimension
+nhid = 200 # the dimension of the feedforward network model in nn.TransformerEncoder
+nlayers = 2 # the number of nn.TransformerEncoderLayer in nn.TransformerEncoder
+nhead = 2 # the number of heads in the multiheadattention models
 dropout = 0.2 # the dropout value
 
 from torch.distributed import rpc
