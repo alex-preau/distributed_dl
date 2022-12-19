@@ -18,68 +18,29 @@
 
 Training a deep learning model to solve a real world problem requires a lot of data, which can be very time consuming. To ensure better efficiency and less time consumption, researchers can leverage parallel training approaches. We will be comparing various methods of parallel training of deep learning models in PyTorch. There are many proposed methods for this problem, from SIMD-like methods of averaging the gradients of batches computed on each independent GPU, to sharding and computing the parallel components of the computational graph independently. In this project, we will be comparing the advantages and disadvantages of these distributed training approaches.
 
+#### Objective 1: PyTorch Baseline
+
+This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50, and the ALBERT transformer model. For the majority of experiments we utilized the CIFAR-10 dataset
+
+#### Objective 2: Horovod Distributed Training
+
+Our second objective is to implement the same models PyTorch, but now with distributed gradient computation and averaging across multiple GPUs using Horovod [1]. Horovod is a distributed deep learning training framework for PyTorch, which makes distributed deep learning fast and easy to use. Each GPU trains on a subset of data, and gradients are synchronized with an allreduce or allgather step [1]. We will compare the distributed training results with the baseline to investigate which cases benefit from multi-GPU training.
+
 <div align="center">
-<a href="http://camma.u-strasbg.fr/">
-<img src="./img_src/project_summary.png" width="600">
-</a>
+<img src="./img_src/horovod.png" width="800">
 </div>
 
+#### Objective 3: Fair Scale
 
-#### Dataset
+TODO
 
-The dataset used here is [CholecT45](https://github.com/CAMMA-public/cholect45) [1], a dataset of laparoscopic cholecystectomy surgical videos. The dataset contains 45 videos of cholecystectomy procedures collected in Strasbourg, France. The images are extracted at 1 fps from the videos and annotated with triplet information about surgical actions in the format of <instrument, verb, target>. There are 90,489 frames and 127,385 triplet instances in the dataset. An example of three frames for six different videos is shown below.
+#### Thrust 4: Pipelining
 
-Each video is annotated with an action triplet containing at least one of each of 7 instruments, 11 verbs, and 15 tissues:
-
-- **Instruments:** grasper, bipolar, hook, scissors, clipper, irrigator, null_instrument
-- **Verbs:** grasp, retract, dissect, coagulate, clip, cut, aspirate, irrigate, pack, null_verb
-- **Instruments:** gallbladder, cystic_plate, cystic_duct, cystic_artery, cystic_pedicle, blood_vessel, fluid, abdominal_wall_cavity, liver, adhesion, omentum, peritoneum, gut, specimen_bag, null_target
+Our final objective is to utilize a pipeline parallelism approach, using the inbuilt Pipe APIs in PyTorch. Typically for large models which don’t fit on a single GPU, model parallelism is employed where certain parts of the model are placed on different GPUs. Although, if this is done naively for sequential models, the training process suffers from GPU under utilization since only one GPU is active at one time as shown in the figure below. To alleviate this problem, pipeline parallelism splits the input minibatch into multiple microbatches and pipelines the execution of these microbatches across multiple GPUs.
 
 <div align="center">
-<img src="./img_src/video_frames_example.png" width="800">
-</div>  
-
-#### Thrust 1: Surgical Video Annotation
-
-This project classifies the endoscopic surgical videos of [1] with action triplets of format (surgical
-tool, surgical action, targeted tissue) listed above using a spatiotemporal deep learning architecture called TripNet [2]. 
-
-The Tripnet model is composed of a feature extraction layer that provides input features to the encoder and decoder in the subsequent architecture. This feature extractor is studied further in thrust 2 by comparing fetaure extraction models and thrust 3 by evaluating transfer learning methods. 
-
-<div align="center">
-<img src="./img_src/tripnet.png" width="700">
+<img src="./img_src/pipeline.png" width="800">
 </div>
-
-The TripNet model encoder encodes triplet components using a Weakly-Supervised Localization (WSL) layer that localizes the instruments. Moreover, the Class Activation Guide (CAG) detects the verbs and targets leveraging the instrument activations.
-
-the TripNet decoder associates triplets from multi-instances, learning instrument-verb-target associations using a learning projection and for final triplet classification.
-
-#### Thrust 2: TripNet Characterization
-
-Affter establishing the model, we characterize the performance of it across different
-deep learning configurations leveraging the [MLOps platform Weights and Balances](https://wandb.ai/site).
-There we evaluate architecture configurations with the best evaluation accuracies across the following parameterizations.
-
-- Batch Size: {64, 128, 256, 512, 1024}
-- Image Augmentation: {Original, Vertical Flip, Horizontal Flip, Contrast, 90-degree Rotation}
-- Learning Rate: {[0, 0.01, 0.01, 0.01], [0, 0.1, 0.1, 0.1], [0, 0.001, 0.001, 0.001]}
-
-#### Thrust 3: Transfer Learning
-
-Next, we implement a transfer learning method using a non-gallbladder tissue dataset such as ImageNet-1k [3], to pretrain the TripNet spatial feature extractor and
-evaluate the change in performance for gallbladder surgical videos similar to [4]. 
-
-<div align="center">
-<a href="https://www.researchgate.net/figure/Visual-examples-of-the-ImageNet-1K_fig6_357652410">
-<img src="./img_src/imagenet1k.PNG" width="600">
-</a>
-</div>
-
-#### Thrust 4: Explainability via Class Activation Mapping
-
-Lastly, the project brings explainability of machine learning model decisions to surgical annotation
-deep learning by pairing the deep learning network with class activation mappings (CAM) [5] to highlight areas of the image responsible for the classification decision. Ultimately this shows different emphasis areas in the same image for different classes (instrument, verb, tissue) which gives confidence the model is learning different and meaningful activations for each class. 
-
 
 ## II. Repository Description
 
