@@ -260,6 +260,13 @@ nhead = 2  # number of heads in nn.MultiheadAttention
 dropout = 0.2  # dropout probability
 model = TransformerModel(ntokens, emsize, nhead, d_hid, nlayers, dropout).to(device)
 
+def get_total_params(module: torch.nn.Module):
+    total_params = 0
+    for param in module.parameters():
+        total_params += param.numel()
+    return total_params
+
+print ('Total parameters in model: {:,}'.format(get_total_params(model)))
 
 ######################################################################
 # Run the model
