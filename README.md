@@ -149,6 +149,38 @@ From the results, ResNet-18 has higher throughput than ResNet-50 as expected, be
 
 The best performing configuration for ResNet-18 actually just used a single GPU with batch size 256. It seems that the model is too small to make batch distribution worthwhile, and it is most efficient to just train on a single GPU without having to share gradients. However, ResNet-50 had the best performance with 2 GPUs, a batch size of 512, and FP16 All-Reduce precision. When using a larger model it is most efficient to distribute the training because much more time is spent computing gradients, making the communication cost of sharing gradients worthwhile.
 
+
+#### FairScale Distributed Training
+
+FairScale accelerates deep learning training by distributing batches shards of models accross different across multiple GPUs. Each device gets a copy of a porition of the model, a shard. All shard weights are shared during an all-gather step preceding the foreward pass, and then the weights belonging to other shards are discarded. Another all-gather step precedes the backward pass, afterwhich other weights are again discarded and an all-scatter-reduce step distributes and averages weights accross GPUs. These operations mean that a large dataset can be split into N components, one for each back just as standard distributed data training. However, unlike distributed data the model itself is sharded allowing significant memory savings for large models, and an accompanying speedup.
+
+This is unlike pipelining, as we will discuss next. Pipeliing does break the model into components, but they must be run partially sequentially. In fully shareded data parallelism each sharded portion of the model runs a minibatch end-to-end, as the weights are briefly shared in the all-gather step.
+
+
+We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 million trainable parameters) training using FairScale on the CIFAR-10 dataset. We also investigated alBERT, a transfromer-based large language model trained on the GLUE COLA dataset. The COLA dataset is made of 10,657 sentences and is a binary classification task. The sentences are classified based on gramatical acceptability. <cite this https://arxiv.org/pdf/1805.12471.pdf>
+
+ We investigated 72 combinations of model, batch size, precision, and number of GPUs. Precision here is not exclusively at the all-gather step unlike Horovod. FairScale uses pytorch lighning, which has advanced mixed precision features. Parts of the foreward and backward steps themselves are done in reduced precision, allowing speedups even on single GPU models.
+ 
+- Model: ResNet-18, ResNet-50, alBERT
+- Batch size: ResNet:[32, 64, 128, 256, 512, 1024], alBERT:[2, 4, 8, 16, 32, 64]
+- Precision: FP32, FP16
+- GPUs: 1, 2
+
+We do not record loss as we do not train models to convergence and obvserved losses after a single epoch were roughtly equivilent for all training schemes. 
+
+<div align="center">
+<img src="./img_src/fairscale_table_1.PNG" width="600">
+</div>
+
+<div align="center">
+<img src="./img_src/fairscale_table_2.PNG" width="600">
+</div>
+
+<div align="center">
+<img src="./img_src/fairscale_table_3.PNG" width="600">
+</div>
+
+
 #### Pipelining
 
 Pipeline parallelism is a useful technique for improving training speed in deep learning models. In this report, we split a Transformer model across two GPUs and use pipeline parallelism for training. The Transformer Encoder Layer parameters are split evenly between two GPUs. We train a Transformer model on a language modeling task to assign a probability for the likelihood of a given word to follow a sequence of words.
