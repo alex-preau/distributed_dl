@@ -112,11 +112,11 @@ Horovod accelerates deep learning training by distributing batches across multip
 Note that when using a single GPU there is no All-Reduce step so precision is not applicable. We recorded the throughput for each training configuration as samples/second (or images/second). We did not record loss or accuracy which had negligible variation. The full table of results are shown below:
 
 <div align="center">
-<img src="./img_src/horovod_table_1.png" width="800">
+<img src="./img_src/horovod_table_1.PNG" width="800">
 </div>
 
 <div align="center">
-<img src="./img_src/horovod_table_2.png" width="800">
+<img src="./img_src/horovod_table_2.PNG" width="800">
 </div>
 
 A similar trend persists from the instrument classification to the verb classification; some verbs like retract and dissect have greater than 80% accuracy in almost all cases, but other actions like irrigate and asipirate have less than 20% accuracy in most cases. Moreover, the distribution of actions in the dataset correlates positively to the classification accuracy. For example, the entire dataset has 49,247 dissect video frames and 572 irrigate video frames. This in part explains the discrepancy in classification accuracy between the two classes.
