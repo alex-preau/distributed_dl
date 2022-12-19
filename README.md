@@ -20,7 +20,7 @@ Training a deep learning model to solve a real world problem requires a lot of d
 
 #### Objective 1: PyTorch Baseline
 
-This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50, and the ALBERT transformer model. For the majority of experiments we utilized the CIFAR-10 dataset
+This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50, and the ALBERT transformer model. For the ResNet-18 and ResNet-50 models we utilized the CIFAR-10 dataset, and for alBERT we utilized the General Language Understanding Evaluation (GLUE) language classification COLA dataset set.
 
 #### Objective 2: Horovod Distributed Training
 
@@ -30,9 +30,14 @@ Our second objective is to implement the same models PyTorch, but now with distr
 <img src="./img_src/horovod.PNG" width="800">
 </div>
 
-#### Objective 3: Fair Scale
+#### Objective 3: FairScale
 
-TODO
+Our second objective is using Fair Scale to train the same models with fully sharded data parallelism on multiple GPUs. This is an advanced form of Data Parallelism in which data is split between GPUs as in distributred data parallelism, but the model itself is also sharded onto multiple GPUs. The weights are shared among shards via an allgather step and the foreward pass is calcualted. Allgather is performed again to allow the backward pass to take place, and then the gradients are spread to other GPUs and average via a reduce-scatter operation. The sharding of models is particularly optimized for models which are too large to fit in a single GPU memory, such as modern large language models. We will compare the performance of this optimized training versus the baseline and other models. 
+
+
+<div align="center">
+<img src="./img_src/FSDP.PNG" width="800">
+</div>
 
 #### Thrust 4: Pipelining
 
@@ -79,6 +84,28 @@ Horovod can be run with the following command, specifying the number of GPUs to 
 horovodrun -np 2 python pytorch_resnet_cifar10.py
 ```
 
+### FairScale 
+FairScale can be installed with
+```
+pip install fairscale
+```
+
+Pytorch Lightning can be installed with 
+```
+pip install pytorch-lightning
+
+```
+#### Example run command
+FairScale Resnet 18 can be run with the following command, specifcying number of GPUs to use, if FP16 should be used
+NOTE only ResNet18 and ResNet50 are supported
+```
+python fairseq_resnet.py --resnet 18 --fp False --gpus 2
+```
+
+FairScale alBERT can be run with the followign command, specifying the number of GPUs to use and if FP16 should be used
+```
+python fairseq_albert.py --fp False --gpus 2
+```
 ### Pipelining
 
 #### System Requirements
@@ -180,20 +207,7 @@ This comparison is done for a larger model, a ResNet-50, and a smaller model, a 
 
 # V. References
 
-[1] A.P. Twinanda, S. Shehata, D. Mutter, J. Marescaux, M. de Mathelin, N. Padoy, EndoNet: A
-Deep Architecture for Recognition Tasks on Laparoscopic Videos, IEEE Transactions on Medical
-Imaging (TMI), arXiv preprint, 2017
+[1] 
 
-[2] Nwoye, Chinedu Innocent, et al. "Recognition of instrument-tissue interactions in endoscopic
-videos via action triplets." International Conference on Medical Image Computing and
-Computer-Assisted Intervention. Springer, Cham, 2020.
-
-[3] Russakovsky, Olga, et al. "Imagenet large scale visual recognition challenge." International journal of computer vision 115.3 (2015): 211-252.
-
-[4] Christodoulidis, Stergios, et al. "Multisource transfer learning with convolutional neural
-networks for lung pattern analysis." IEEE journal of biomedical and health informatics 21.1
-(2016): 76-84.
-
-[5] Selvaraju, Ramprasaath R., et al. "Grad-cam: Visual explanations from deep networks via
-gradient-based localization." Proceedings of the IEEE international conference on computer
-vision. 2017.
+[2] Fully Sharded Data Parallel: faster AI training with fewer GPUs: 
+    https://engineering.fb.com/2021/07/15/open-source/fsdp/
