@@ -89,7 +89,6 @@ Additional installation steps required to run the pipelining script:
 ```
 pip install torchtext==0.13.0
 pip install torchdata==0.4.0
-
 ```
 
 #### Example run command
@@ -125,7 +124,11 @@ The best performing configuration for ResNet-18 actually just used a single GPU 
 
 #### Pipelining
 
+Pipeline parallelism is a useful technique for improving training speed in deep learning models. In this report, we split a Transformer model across two GPUs and use pipeline parallelism for training. The Transformer Encoder Layer parameters are split evenly between two GPUs. We train a Transformer model on a language modeling task to assign a probability for the likelihood of a given word to follow a sequence of words.
 
+<div align="center">
+<img src="./img_src/transformer_architecture.jpg" width="400">
+</div>
 
 #### Transfer Learning
 
