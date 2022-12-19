@@ -111,11 +111,11 @@ Horovod accelerates deep learning training by distributing batches across multip
 Note that when using a single GPU there is no All-Reduce step so precision is not applicable. We recorded the throughput for each training configuration as samples/second (or images/second). We did not record loss or accuracy which had negligible variation. The full table of results are shown below:
 
 <div align="center">
-<img src="./img_src/horovod_table_1.PNG" width="800">
+<img src="./img_src/horovod_table_1.PNG" width="600">
 </div>
 
 <div align="center">
-<img src="./img_src/horovod_table_2.PNG" width="800">
+<img src="./img_src/horovod_table_2.PNG" width="600">
 </div>
 
 From the results, ResNet-18 has higher throughput than ResNet-50 as expected, because a smaller model requires less computations to train. Another interesting observation was the effect of the All-Reduce precision. In some cases like ResNet-18 with batch size 32, halving the precision nearly doubled the throughput. This indicates that the All-Reduce step was the bottleneck. In other cases like ResNet-50 with batch size 512 there is a much smaller improvement. Due to the more complex model and larger batch, there is much more computation to be done on each GPU making the All-Reduce precision less important. Batch size also had interesting behavior, and performance seemed to peak around a batch of 256 or 512. It seems that a larger batch improves performance up until a certain point when the GPU memory is saturated, and then has worsened performance.
@@ -129,6 +129,18 @@ Pipeline parallelism is a useful technique for improving training speed in deep 
 <div align="center">
 <img src="./img_src/transformer_architecture.jpg" width="400">
 </div>
+
+We compare a single GPU training with the pipelined multi-GPU training of this transformer model with the following hyperparameters:
+- embedding dimension = 200
+- dimension of the feedforward network model = 200
+- number of Transformer Encoder Layers = 2
+- number of heads in Multihead Attention = 2
+
+Below are the results of training time per epoch
+- single GPU: ~48 seconds
+- two GPU pipelined: ~4 seconds
+
+As we can see there is over 10x improvement in training speed with a multi-GPU pipelined approach. We verified that both models contained the exact same number of parameters (12,025,582) so we do not believe there is any mistake in the code. We had expected around a 2x improvement so the pipelining approach far exceeded our expectations.
 
 #### Transfer Learning
 
