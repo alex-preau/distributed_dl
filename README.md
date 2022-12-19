@@ -136,9 +136,9 @@ We compare a single GPU training with the pipelined multi-GPU training of this t
 - number of Transformer Encoder Layers = 2
 - number of heads in Multihead Attention = 2
 
-Below are the results of training time per epoch
-- single GPU: ~48 seconds
-- two GPU pipelined: ~4 seconds
+Below are the results of training time per epoch:
+- Single GPU (transformer_tutorial.py): ~48 seconds
+- Two GPU pipelined (pipeline_tutorial.py): ~4 seconds
 
 As we can see there is over 10x improvement in training speed with a multi-GPU pipelined approach. We verified that both models contained the exact same number of parameters (12,025,582) so we do not believe there is any mistake in the code. We had expected around a 2x improvement so the pipelining approach far exceeded our expectations.
 
