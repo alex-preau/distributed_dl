@@ -102,7 +102,7 @@ python pipeline_tutorial.py
 
 #### Horovod Distributed Training
 
-Horovod accelerates deep learning training by distributing batches across multiple GPUs. Each device gets a separate copy of the model, and the weights are updated with an All-Reduce step. We investigated ResNet-18 and ResNet-50 training using Horovod on the CIFAR-10 dataset. CIFAR-10 is a popular computer vision dataset for object recognition, and contains 60,000 32x32 color images containing one of 10 object classes, with 6000 images per class. We investigated 36 combinations of model, batch size, precision at the All-Reduce step, and number of GPUs. The different options used are as follow:
+Horovod accelerates deep learning training by distributing batches across multiple GPUs. Each device gets a separate copy of the model, and the weights are updated with an All-Reduce step. We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 million trainable parameters) training using Horovod on the CIFAR-10 dataset. CIFAR-10 is a popular computer vision dataset for object recognition, and contains 60,000 32x32 color images containing one of 10 object classes, with 6000 images per class. We investigated 36 combinations of model, batch size, precision at the All-Reduce step, and number of GPUs. The different options used are as follow:
 
 - Model: ResNet-18, ResNet-50
 - Batch size: 32, 64, 128, 256, 512, 1024
@@ -119,51 +119,13 @@ Note that when using a single GPU there is no All-Reduce step so precision is no
 <img src="./img_src/horovod_table_2.PNG" width="800">
 </div>
 
-A similar trend persists from the instrument classification to the verb classification; some verbs like retract and dissect have greater than 80% accuracy in almost all cases, but other actions like irrigate and asipirate have less than 20% accuracy in most cases. Moreover, the distribution of actions in the dataset correlates positively to the classification accuracy. For example, the entire dataset has 49,247 dissect video frames and 572 irrigate video frames. This in part explains the discrepancy in classification accuracy between the two classes.
+From the results, ResNet-18 has higher throughput than ResNet-50 as expected, because a smaller model requires less computations to train. Another interesting observation was the effect of the All-Reduce precision. In some cases like ResNet-18 with batch size 32, halving the precision nearly doubled the throughput. This indicates that the All-Reduce step was the bottleneck. In other cases like ResNet-50 with batch size 512 there is a much smaller improvement. Due to the more complex model and larger batch, there is much more computation to be done on each GPU making the All-Reduce precision less important. Batch size also had interesting behavior, and performance seemed to peak around a batch of 256 or 512. It seems that a larger batch improves performance up until a certain point when the GPU memory is saturated, and then has worsened performance.
 
-<div align="center">
-<img src="./img_src/classification_accuracy_models_vs_parameters_Verb.png" width="600">
-</div>
+The best performing configuration for ResNet-18 actually just used a single GPU with batch size 256. It seems that the model is too small to make batch distribution worthwhile, and it is most efficient to just train on a single GPU without having to share gradients. However, ResNet-50 had the best performance with 2 GPUs, a batch size of 512, and FP16 All-Reduce precision. When using a larger model it is most efficient to distribute the training because much more time is spent computing gradients, making the communication cost of sharing gradients worthwhile.
 
-Finally, the tissue class is investigated. There are 15 tissues, making it the class with the most labels. Like before, there are 87,808 gallbladder video frames and 1,227 peritoneum frames, explaining why the former has a classification accuracy greater than 80% in most cases and why the latter is near 0% in most cases.
+#### Pipelining
 
-<div align="center">
-<img src="./img_src/classification_accuracy_models_vs_parameters_Tissue.png" width="600">
-</div>
 
-#### Model Characterization
-
-We characterized the performance of the tripnet model across different deep learning configurations, leveraging the MLOps platform Weights and Biases. We conducted a  hyperparameter sweep for 10 epochs across 18 random combinations of the following:
-
-- Batch Size: {64, 128, 256, 512, 1024}
-- Image Augmentation: {[Original], [Original, Vertical Flip, Horizontal Flip, Contrast, 90-degree Rotation]}
-- Learning Rate: {[0.1, 0.1, 0.1], [0.01, 0.01, 0.01], [0.001, 0.001, 0.001]}
-
-- Batch size indicates the number of samples to propogate through the network.
-- Image augmentation indicates the data augmentations to be applied to each sample. This was configured as a binary setting of data augmentation or no data augmentation. The data augmentations used were Vertical Flip, Horizontal Flip, Contrast, and 90-degree Rotation. It is also possible to use any combination of these augmentations, but this was done for simplicity. 
-- Learning rate indicates the step size of each weight update. The learning rates are shown as triplets, because there is a separate learning rate for instrument, verb, and target. It is possible to have a different learning rate for each, but they were kept the same for simplicity.
-
-We also reduced the number of videos from 50 to 10 for the hyperparameter sweep to minimize training time and cost. When using the entire dataset of 50 videos, a single epoch takes ~12 minutes on a V100 GPU. Conducting a sweep of 18 combinations with 10 epoch each would take ~36 hours on a V100 GPU, which was too long for the scope of this project.
-
-The hyperparameter sweep results can be found here on W&B: https://wandb.ai/skyler-szot/uncategorized?workspace=user-skylers27
-
-<div align="center">
-<img src="./img_src/sweep_table.PNG" width="1000">
-</div>
-<div align="center">
-<img src="./img_src/sweep_i.PNG" width="1000">
-</div>
-<div align="center">
-<img src="./img_src/sweep_v.PNG" width="1000">
-</div>
-<div align="center">
-<img src="./img_src/sweep_t.PNG" width="1000">
-</div>
-<div align="center">
-<img src="./img_src/sweep_ivt.PNG" width="1000">
-</div>
-
-The first interesting finding from the hyperparameter sweep was that batch sizes of 512 and 1024 were actually too large for the V100 GPU memory and caused it to crash. This reduced our successful runs in the sweep to 11. The second finding was that learning rate was very important in acheiving a low loss for this particular problem. The highest learning rate tested of 0.1 had the best performance, followed by 0.01, and 0.001 had the worst performance. We suspect this behavior was from using just 10 epochs, making a higher learning rate advantageous. The third finding was that data augmentation was also beneficial. This makes sense because we reduced the total number of videos to just 10, so data augmentation should provide better model generalization.
 
 #### Transfer Learning
 
