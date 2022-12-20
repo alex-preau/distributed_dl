@@ -1,5 +1,3 @@
-#https://github.com/horovod/horovod/issues/2103
-
 import argparse
 import time
 import numpy as np
