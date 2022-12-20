@@ -168,6 +168,8 @@ We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 
 
 We do not record loss as we do not train models to convergence and obvserved losses after a single epoch were roughtly equivilent for all training schemes. 
 
+We have highlighted the largest throughputs for each precision model.
+
 <div align="center">
 <img src="./img_src/fairscale_table_1.png" width="600">
 </div>
@@ -180,6 +182,15 @@ We do not record loss as we do not train models to convergence and obvserved los
 <img src="./img_src/fairscale_table_3.png" width="600">
 </div>
 
+As in the Horovod results, ResNet-18 has higher throughput than ResNet-50. Also note that the throughput of alBERT is not directly comparable to that of the ResNet models as the inputs are very different, sequences versus small images. 
+
+These results are very different from the Horovod data parallelism run, and the speedups are more dramatic. For all models we tested, larger batch sizes increase throughput to a point at which GPU memory becomes saturated. However, that point is generally larger than in plain data parallelism. This is due to the decreases memory footprint of a sharded model. As a result larger batch sizes are able to fit in GPU memory before it becomes saturated. However this point of saturation is still clear, alBERT throuhgput begins to decrease after a batch size of 64, and depending on the precision ResNet-18 and ResNet-50 begin to loose througput after 512, or potentially after 1024 although we have not tested larger batch sizes.
+
+The increase in throuhgput by training on multiple GPUs is very dramatic with fully sharded data parallelism. Depending on the specifics of the model and precision, the speedup from this strategy was potentially double or more of the single GPU performance. For instance, with ResNet-50 and a batch of 1024, throughput went from 3500 to approximelty 9000 samples/ second. This is likely due to the lower memory footprint of the model allowing larger batches and more throughput.
+
+One particularly interesting element of these results is the speedup from float16 versus float32. Contrary to what we would naively expect, float16s have a maximum throuhgput at a smaller batch size than float32. However, there is some overhead from the necessity of going back and forth between float32 and float16. Evidently the overhead of converting from flaot16 to float32 becomes too significant at larger batch sizes, outdoing any benifits from paralleism.
+
+The results for alBERT are similar. A batch size of 64 is fastest for all models, past this the memory becomes saturated. Parallelizing the model with shards leads to roughtly doibling in perfirmance illustrating the significant benifit for large models which may have difficulty fitting in GPU memory otherwise. While alBERT is not that large that it cannot fit in GPU memory, it is notably larger than ResNet-50.
 
 #### Pipelining
 
