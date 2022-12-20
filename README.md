@@ -67,6 +67,24 @@ The repository is organized into folders for each of our model objectives. All e
 
 ## III. Example Commands
 
+#### General Requirements
+
+alBERT requires components of the huggingface library
+
+```
+pip install transformers
+pip install datasets
+```
+
+The ResNet models and CIFAR-10 require torchvision
+
+```
+pip install torchvision
+```
+
+
+
+
 ### Horovod
 
 #### System Requirements
@@ -194,7 +212,10 @@ The increase in throuhgput by training on multiple GPUs is very dramatic with fu
 
 One particularly interesting element of these results is the speedup from float16 versus float32. Contrary to what we would naively expect, float16s have a maximum throuhgput at a smaller batch size than float32. However, there is some overhead from the necessity of going back and forth between float32 and float16. Evidently the overhead of converting from flaot16 to float32 becomes too significant at larger batch sizes, outdoing any benifits from paralleism.
 
-The results for alBERT are similar. A batch size of 64 is fastest for all models, past this the memory becomes saturated. Parallelizing the model with shards leads to roughtly doubling in perfirmance illustrating the significant benifit for large models which may have difficulty fitting in GPU memory otherwise. While alBERT is not that large that it cannot fit in GPU memory, it is notably larger than ResNet-50. However for alBERT mixed precision training has a very significant speedup, more important than training on 2 GPUs alone. THis is likely due to the sheer number of operations in the transformer-based model. Pytorch Lightning is evideinelty able to convert a large number of thse operations into float16 operations, significantly improving throughput. 
+The results for alBERT are similar. A batch size of 64 is fastest for all models, past this the memory becomes saturated. Parallelizing the model with shards leads to roughtly doubling throughput over the respective same precision single GPU model. This dramatic speedup is likely due to the large number of operations in alBERT. While the model it smaller than ResNet-50, alBERT has roughly the same number of operations as the 10x larger BERT model. The parameter decrease is accomplished thorugh parameter sharing. As a result by converting some oeprations to float16, pytorch lightning produces a very significant speedup
+ 
+This speedup is not present in the horovod alBERT because horovod does not convert to half precision in the same way. Horovod only uses half precision dugin inter-gpu communicaion steps, not during actual opertaions like pytorch lighntning. However, the spcifics of the method used by pytorch lightning is a black box. They use lower precision if there is no effect on loss, but it uncear which elements these are. This makes comparing performance one to one difficult.
+
 
 #### Pipelining
 
