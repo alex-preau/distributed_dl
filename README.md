@@ -145,6 +145,10 @@ Note that when using a single GPU there is no All-Reduce step so precision is no
 <img src="./img_src/horovod_table_2.PNG" width="600">
 </div>
 
+<div align="center">
+<img src="./img_src/albert_horovod.PNG" width="600">
+</div>
+
 From the results, ResNet-18 has higher throughput than ResNet-50 as expected, because a smaller model requires less computations to train. Another interesting observation was the effect of the All-Reduce precision. In some cases like ResNet-18 with batch size 32, halving the precision nearly doubled the throughput. This indicates that the All-Reduce step was the bottleneck. In other cases like ResNet-50 with batch size 512 there is a much smaller improvement. Due to the more complex model and larger batch, there is much more computation to be done on each GPU making the All-Reduce precision less important. Batch size also had interesting behavior, and performance seemed to peak around a batch of 256 or 512. It seems that a larger batch improves performance up until a certain point when the GPU memory is saturated, and then has worsened performance.
 
 The best performing configuration for ResNet-18 actually just used a single GPU with batch size 256. It seems that the model is too small to make batch distribution worthwhile, and it is most efficient to just train on a single GPU without having to share gradients. However, ResNet-50 had the best performance with 2 GPUs, a batch size of 512, and FP16 All-Reduce precision. When using a larger model it is most efficient to distribute the training because much more time is spent computing gradients, making the communication cost of sharing gradients worthwhile.
@@ -190,7 +194,7 @@ The increase in throuhgput by training on multiple GPUs is very dramatic with fu
 
 One particularly interesting element of these results is the speedup from float16 versus float32. Contrary to what we would naively expect, float16s have a maximum throuhgput at a smaller batch size than float32. However, there is some overhead from the necessity of going back and forth between float32 and float16. Evidently the overhead of converting from flaot16 to float32 becomes too significant at larger batch sizes, outdoing any benifits from paralleism.
 
-The results for alBERT are similar. A batch size of 64 is fastest for all models, past this the memory becomes saturated. Parallelizing the model with shards leads to roughtly doibling in perfirmance illustrating the significant benifit for large models which may have difficulty fitting in GPU memory otherwise. While alBERT is not that large that it cannot fit in GPU memory, it is notably larger than ResNet-50.
+The results for alBERT are similar. A batch size of 64 is fastest for all models, past this the memory becomes saturated. Parallelizing the model with shards leads to roughtly doubling in perfirmance illustrating the significant benifit for large models which may have difficulty fitting in GPU memory otherwise. While alBERT is not that large that it cannot fit in GPU memory, it is notably larger than ResNet-50. However for alBERT mixed precision training has a very significant speedup, more important than training on 2 GPUs alone. THis is likely due to the sheer number of operations in the transformer-based model. Pytorch Lightning is evideinelty able to convert a large number of thse operations into float16 operations, significantly improving throughput. 
 
 #### Pipelining
 
