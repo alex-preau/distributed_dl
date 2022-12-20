@@ -212,42 +212,6 @@ Below are the results of training time per epoch:
 
 As we can see there is over 10x improvement in training speed with a multi-GPU pipelined approach. We verified that both models contained the exact same number of parameters (12,025,582) so we do not believe there is any mistake in the code. We had expected around a 2x improvement so the pipelining approach far exceeded our expectations.
 
-#### Transfer Learning
-
-A key part of the tripnet model training is the ResNet feature extractor. The feature extraction layer is responsible for extracting high and low level features from each input image from a surgical video. These features are utilized in the tripnet model for instrument, verb, and target classification. One possibility to improve the models accuracy and convergence is transfer learning. Rather than training the ResNet feature extractor from scratch, it is possible to initialize with pretrained weights that share some high-level features with the target dataset (CholecT45). We utilized the ImageNet-1K pretrained weights as the starting point for our transfer learning task with a ResNet-18 feature extractor. ImageNet is a dataset containing more than 14M images and 22K categories, while ImageNet-1K contains the same 14M images, but is reduced to just 1K high-level categories. We hoped that the ImageNet-1K dataset would share many of the same high level features as the CholecT45 dataset, and might provide an improvement in convergence and accuracy.
-
-We investigated two identical training schemes using the default hyperparameters for 15 epochs, changing only the ResNet-18 feature extractor pretraining. We recorded the loss for instrument, verb, and target individually, as well as the IVT triplet loss. The results are shown below:
-
-<div align="center">
-<img src="./img_src/instrument.png" width="400"> <img src="./img_src/verb.png" width="400">
-</div>
-
-<div align="center">
-<img src="./img_src/target.png" width="400"> <img src="./img_src/ivt.png" width="400">
-</div>
-
-
-As we can see in the graphs above, pretraining provided significant improvement for all three classification tasks individually, reaching a lower loss in all cases. This means that the ImageNet-1K pretrained weights provided useful high level features as a basis for fine-tuning on the individual tasks. However, there appears to be little improvement in the loss for IVT triplet classification as a result of pretraining. Correctly identifying a triplet of instrument, verb, and target is a much more complex task, and the ImageNet-1K pretraining provided no improvement.
-
-#### Class Activation Mapping
-
-Each class requires a different feature extractor activation. Intuitively, identifying the surgical instrument will require different features than identifying the target tissue. In order to evaluate the models' ability to make decisions with this intuition, the class activation maps for each class type (instrument, verb, tissue) for the same image are compared. It's clear from the comparison with a ResNet-18 below that the model is learning to extract different features for each class type. 
-
-<div align="center">
-<img src="./img_src/class_cam_comparison_vid04_frame300_resnet18.png" width="800">
-</div>
-
-This comparison is done for a larger model, a ResNet-50, and a smaller model, a SqueezeNet, to show that the features learned per class type are mostly agnostic to the architecture and more specific to the class type. Specifically in this video frame, all models show instrument class activation as a large central feature over one or both of the surgical tools. The verb class type has a more sporadic activation map across all models which is intuitive because the model is looking at moving components. Lastly, the tissue class activation map is more interleaved between the tools, seemingly focusing on the background tissue. 
-
-<div align="center">
-<img src="./img_src/class_cam_comparison_vid04_frame300_resnet50.png" width="800"> 
-</div>
-
-<div align="center">
-<img src="./img_src/class_cam_comparison_vid04_frame300_squeezenet0.png" width="800">
-</div>
-
-
 # V. References
 
 [1] 
