@@ -106,7 +106,7 @@ class GLUEDataModule(LightningDataModule):
         AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
 
     def train_dataloader(self):
-        return DataLoader(self.dataset['train'], batch_size=self.train_batch_size, shuffle=True,num_workers=1)
+        return DataLoader(self.dataset['train'], batch_size=self.train_batch_size, shuffle=True,num_workers=2,pin_memory=True)
 
     def len(self):
         return self.dataset['train'].__len__()
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     seed_everything(args.seed)
     if args.all:
         for m_type in [50]:
-            for bs in [2,4,8,16,32,64]:#2,64,128,256,
+            for bs in [2,4,8,16,32,64,96]:#2,64,128,256,
                 for fp in [32,16]:
                     for gpus in [1,2]:
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
                         timing_dict['Samples/Sec'].append((dm.len() * args.epochs) / (e-s))
                         print("Complete Timing Dict")
                         out_data = pd.DataFrame(data=timing_dict)
-                        out_data.to_csv('FSDP_timing_albert.csv')
+                        out_data.to_csv('FSDP_timing_albert_l.csv')
     else:
         dm = GLUEDataModule( train_batch_size=64)
         dm.setup("fit")

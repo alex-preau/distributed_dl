@@ -131,18 +131,18 @@ if __name__ == '__main__':
     img_val =  torchvision.datasets.CIFAR10(root='./data', train=False,
                 download=True, transform=transform)
     if args.all:
-        for m_type in [50]:
-            for bs in [1024]:#2,64,128,256,
+        for m_type in [18,50]:
+            for bs in [32,64,128,256,512,1024]:#2,64,128,256,
                 for fp in [32,16]:
                     for gpus in [1,2]:
 
 
 
                         model = ResNet50(10,args.resnet)
-                        train_dl = DataLoader(img_train,num_workers=1,batch_size=bs)
+                        train_dl = DataLoader(img_train,num_workers=1,batch_size=bs,pin_memory=True)
                         val_dl = DataLoader(img_val)
 
-                        trainer = pl.Trainer(strategy="fsdp_native", accelerator="cuda", devices=gpus,max_epochs=args.epochs,precision=fp) #strategy='fsdp_native'
+                        trainer = pl.Trainer(strategy="fsdp", accelerator="cuda", devices=gpus,max_epochs=args.epochs,precision=fp) #strategy='fsdp_native'
 
 
 
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                         timing_dict['Samples/Sec'].append((len(img_train) * args.epochs) / (e-s))
                         print("Complete Timing Dict")
                         out_data = pd.DataFrame(data=timing_dict)
-                        out_data.to_csv('FSDP_timing.csv')
+                        out_data.to_csv('fsdp_timing.csv')
 
     else:
         model = ResNet50(10,args.resnet)
