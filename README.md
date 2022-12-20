@@ -164,7 +164,7 @@ Note that when using a single GPU there is no All-Reduce step so precision is no
 </div>
 
 <div align="center">
-<img src="./img_src/albert_horovod.PNG" width="600">
+<img src="./img_src/albert_horovod.png" width="600">
 </div>
 
 From the results, ResNet-18 has higher throughput than ResNet-50 as expected, because a smaller model requires less computations to train. Another interesting observation was the effect of the All-Reduce precision. In some cases like ResNet-18 with batch size 32, halving the precision nearly doubled the throughput. This indicates that the All-Reduce step was the bottleneck. In other cases like ResNet-50 with batch size 512 there is a much smaller improvement. Due to the more complex model and larger batch, there is much more computation to be done on each GPU making the All-Reduce precision less important. Batch size also had interesting behavior, and performance seemed to peak around a batch of 256 or 512. It seems that a larger batch improves performance up until a certain point when the GPU memory is saturated, and then has worsened performance.
