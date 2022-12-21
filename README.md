@@ -20,7 +20,7 @@ Training a deep learning model to solve a real world problem requires a lot of d
 
 #### Objective 1: PyTorch Baseline
 
-This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50, and the ALBERT[3] transformer model. For the ResNet-18 and ResNet-50 models we utilized the CIFAR-10 dataset, and for alBERT we utilized the General Language Understanding Evaluation (GLUE) [4] language classification COLA dataset set.
+This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50 [1], and the ALBERT[3] transformer model. For the ResNet-18 and ResNet-50 models we utilized the CIFAR-10 dataset, and for alBERT we utilized the General Language Understanding Evaluation (GLUE) [4] language classification COLA dataset set.
 
 #### Objective 2: Horovod Distributed Training
 
@@ -238,7 +238,8 @@ As we can see there is over 10x improvement in training speed with a multi-GPU p
 
 # V. References
 
-[1] 
+[1] He, Kaiming et al. “Deep Residual Learning for Image Recognition.” 
+2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR) (2015): 770-778.
 
 [2] Fully Sharded Data Parallel: faster AI training with fewer GPUs: 
     https://engineering.fb.com/2021/07/15/open-source/fsdp/
