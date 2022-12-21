@@ -251,3 +251,9 @@ ALBERT: A Lite BERT for Self-supervised Learning of Language Representations. IC
 
 [4] [GLUE: A Multi-Task Benchmark and Analysis Platform for Natural Language Understanding]
 (https://aclanthology.org/W18-5446) (Wang et al., EMNLP 2018)
+
+[5] Horovod with PyTorch:
+https://horovod.readthedocs.io/en/stable/pytorch.html 
+
+[6] PyTorch Pipeline Parallelism
+https://pytorch.org/docs/stable/pipeline.html 
