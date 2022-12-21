@@ -20,7 +20,7 @@ Training a deep learning model to solve a real world problem requires a lot of d
 
 #### Objective 1: PyTorch Baseline
 
-This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50, and the ALBERT transformer model. For the ResNet-18 and ResNet-50 models we utilized the CIFAR-10 dataset, and for alBERT we utilized the General Language Understanding Evaluation (GLUE) language classification COLA dataset set.
+This project aims to investigate various distributed training techniques for deep learning training. Our first goal is to implement and train various models in PyTorch as a baseline, without any distributed training optimizations. The models investigated in this report are ResNet-18, ResNet-50, and the ALBERT[3] transformer model. For the ResNet-18 and ResNet-50 models we utilized the CIFAR-10 dataset, and for alBERT we utilized the General Language Understanding Evaluation (GLUE) [4] language classification COLA dataset set.
 
 #### Objective 2: Horovod Distributed Training
 
@@ -178,8 +178,7 @@ FairScale accelerates deep learning training by distributing batches shards of m
 
 This is unlike pipelining, as we will discuss next. Pipeliing does break the model into components, but they must be run partially sequentially. In fully shareded data parallelism each sharded portion of the model runs a minibatch end-to-end, as the weights are briefly shared in the all-gather step.
 
-
-We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 million trainable parameters) training using FairScale on the CIFAR-10 dataset. We also investigated alBERT, a transfromer-based large language model trained on the GLUE COLA dataset. The COLA dataset is made of 10,657 sentences and is a binary classification task. The sentences are classified based on gramatical acceptability. <cite this https://arxiv.org/pdf/1805.12471.pdf>
+We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 million trainable parameters) training using FairScale on the CIFAR-10 dataset. We also investigated alBERT, a transfromer-based large language model trained on the GLUE COLA dataset [4]. The COLA dataset is made of 10,657 sentences and is a binary classification task. The sentences are classified based on gramatical acceptability. 
 
  We investigated 72 combinations of model, batch size, precision, and number of GPUs. Precision here is not exclusively at the all-gather step unlike Horovod. FairScale uses pytorch lighning, which has advanced mixed precision features. Parts of the foreward and backward steps themselves are done in reduced precision, allowing speedups even on single GPU models.
  
@@ -243,3 +242,9 @@ As we can see there is over 10x improvement in training speed with a multi-GPU p
 
 [2] Fully Sharded Data Parallel: faster AI training with fewer GPUs: 
     https://engineering.fb.com/2021/07/15/open-source/fsdp/
+    
+[3] 	Zhenzhong Lan, Mingda Chen, Sebastian Goodman, Kevin Gimpel, Piyush Sharma, Radu Soricut:
+ALBERT: A Lite BERT for Self-supervised Learning of Language Representations. ICLR 2020
+
+[4] [GLUE: A Multi-Task Benchmark and Analysis Platform for Natural Language Understanding]
+(https://aclanthology.org/W18-5446) (Wang et al., EMNLP 2018)
