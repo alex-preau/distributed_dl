@@ -58,8 +58,10 @@ distributed_dl/
 │   ├── fairseq_test.py
 ├── horovod
 │   ├── pytorch_resnet_cifar10.py
+|   ├── pyorch_albert.py
 ├── pipeline
 │   ├── pipeline_tutorial.py
+|   ├── transformer_tutorial.py
 
 ```
 
@@ -146,10 +148,10 @@ python pipeline_tutorial.py
 
 #### Horovod Distributed Training
 
-Horovod accelerates deep learning training by distributing batches across multiple GPUs. Each device gets a separate copy of the model, and the weights are updated with an All-Reduce step. We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 million trainable parameters) training using Horovod on the CIFAR-10 dataset. CIFAR-10 is a popular computer vision dataset for object recognition, and contains 60,000 32x32 color images containing one of 10 object classes, with 6000 images per class. We investigated 36 combinations of model, batch size, precision at the All-Reduce step, and number of GPUs. The different options used are as follow:
+Horovod accelerates deep learning training by distributing batches across multiple GPUs. Each device gets a separate copy of the model, and the weights are updated with an All-Reduce step. We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 million trainable parameters) training using Horovod on the CIFAR-10 dataset. CIFAR-10 is a popular computer vision dataset for object recognition, and contains 60,000 32x32 color images containing one of 10 object classes, with 6000 images per class. We investigated 54 combinations of model, batch size, precision at the All-Reduce step, and number of GPUs. The different options used are as follow:
 
-- Model: ResNet-18, ResNet-50
-- Batch size: 32, 64, 128, 256, 512, 1024
+- Model: ResNet-18, ResNet-50, alBERT
+- Batch size: ResNet:[32, 64, 128, 256, 512, 1024], alBERT:[2, 4, 8, 16, 32, 64]
 - Precision: FP32, FP16, N/A
 - GPUs: 1, 2
 
@@ -183,7 +185,7 @@ We investigated ResNet-18 (~11 million trainable parameters) and ResNet-50 (~23 
  We investigated 72 combinations of model, batch size, precision, and number of GPUs. Precision here is not exclusively at the all-gather step unlike Horovod. FairScale uses pytorch lighning, which has advanced mixed precision features. Parts of the foreward and backward steps themselves are done in reduced precision, allowing speedups even on single GPU models.
  
 - Model: ResNet-18, ResNet-50, alBERT
-- Batch size: ResNet:[32, 64, 128, 256, 512, 1024], alBERT:[2, 4, 8, 16, 32, 64]
+- Batch size: ResNet:[32, 64, 128, 256, 512, 1024], alBERT:[2, 4, 8, 16, 32, 64, 96]
 - Precision: FP32, FP16
 - GPUs: 1, 2
 
